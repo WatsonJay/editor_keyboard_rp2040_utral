@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 
-#include "editormacros_rp2040.h"
+#include "editor_keyboard_rp2040_utral.h"
 
 #ifdef RGB_MATRIX_ENABLE
 led_config_t g_led_config = {{

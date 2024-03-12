@@ -1,12 +1,12 @@
 {
     "manufacturer": "WatsonJay",
-    "keyboard_name": "editormacros RP2040 pro mini",
+    "keyboard_name": "editormacros RP2040 pro utral",
     "maintainer": "WatsonJay",
     "processor": "RP2040",
     "bootloader": "rp2040",
     "usb": {
         "device_version": "1.0.0",
-        "pid": "0x6062",
+        "pid": "0x6063",
         "vid": "0xFEED"
     },
     "diode_direction": "ROW2COL",
