@@ -11,8 +11,8 @@
     },
     "diode_direction": "ROW2COL",
     "matrix_pins": {
-        "cols": ["GP6", "GP7", "GP8", "GP9"],
-        "rows": ["GP0", "GP1", "GP4", "GP5", "GP14"]
+        "cols": ["GP25", "GP23", "GP22", "GP21", "GP20"],
+        "rows": ["GP29", "GP10", "GP11", "GP26", "GP14"]
     },
     "features": {
         "bootmagic": true,
