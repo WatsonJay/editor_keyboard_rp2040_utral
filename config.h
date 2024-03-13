@@ -30,7 +30,6 @@
 
 #undef RGBLIGHT_ANIMATIONS
 #ifdef RGB_MATRIX_ENABLE
-    #define WS2812_DI_PIN GP19
     #define RGB_MATRIX_LED_COUNT 12
     #define RGBLED_NUM 12
 
