@@ -25,9 +25,12 @@
     },
     "encoder": {
         "rotary": [
-            { "pin_a": "GP20", "pin_b": "GP19" },
-            { "pin_a": "GP21", "pin_b": "GP22" },
-            { "pin_a": "GP25", "pin_b": "GP23" }
+            { "pin_a": "GP5", "pin_b": "GP4" },
+            { "pin_a": "GP0", "pin_b": "GP1" },
+            { "pin_a": "GP6", "pin_b": "GP7" },
+            { "pin_a": "GP8", "pin_b": "GP9" },
+            { "pin_a": "GP16", "pin_b": "GP15" },
+            { "pin_a": "GP18", "pin_b": "GP17" }
         ]
     },
     "url": "",
