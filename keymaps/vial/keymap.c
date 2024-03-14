@@ -30,14 +30,16 @@ bool arrows[4];
 #define MIN_RUN_SPEED       50
 /* timers */
 uint16_t anim_timer = 0;
+uint16_t rgb_timer = 0;
 /* current frame */
 uint8_t current_frame = 0;
+int current_rgbtext_Index = 0;
 /* advanced settings */
 static bool finished_timer = false;
 #define ANIM_FRAME_DURATION 200  // how long each frame lasts in ms
 #define ANIM_SIZE           32   // number of bytes in array. If you change sprites, minimize for adequate firmware size. max is 1024
+
 int rgbModTextLength = 14;
-int currentTextIndex = 0;
 bool isBarking  = false;
 int barkCount = 6;
 bool isJumping  = false;
@@ -290,7 +292,7 @@ static void render_count(void) {
     type_counter[2] = (n /= 10) % 10 ? '0' + (n) % 10 : (n / 10) % 10 ? '0' : ' ';
     type_counter[1] = (n /= 10) % 10 ? '0' + (n) % 10 : (n / 10) % 10 ? '0' : ' ';
     type_counter[0] = n / 10 ? '0' + n / 10 : ' ';
-    oled_write(type_counter, false);
+    oled_write(type_counter, true);
 }
 
 static void render_wpm(void) {
@@ -303,10 +305,15 @@ static void render_wpm(void) {
     oled_set_cursor(0, 2);
     oled_write_P(PSTR("WPM"), false);
     oled_set_cursor(0, 3);
-    oled_write(wpm_counter, false);
+    oled_write(wpm_counter, true);
 }
 
 static void render_rgb_info(void) {
+
+    void moving_show_text(char* text) {
+
+    }
+
     // oled_set_cursor(4, 2);
     // oled_write_P(PSTR("Animation:"), false);
     oled_set_cursor(0, 1);
@@ -450,10 +457,6 @@ static void render_rgb_info(void) {
     }
 }
 
-static void moving_show_text(char* text) {
-
-}
-
 /* logic */
 static void render_luna(int LUNA_X, int LUNA_Y) {
     /* Sit */
@@ -472,7 +475,6 @@ static void render_luna(int LUNA_X, int LUNA_Y) {
             { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x04, 0x0c, 0x10, 0x10, 0x20, 0x20, 0x20, 0x28, 0x3e, 0x1c, 0x20, 0x20, 0x3e, 0x0f, 0x11, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
         }
     };
-
     /* Walk */
     static const char PROGMEM walk[2][3][ANIM_SIZE] = {
         /* 'walk1', 32x22px */
@@ -603,16 +605,6 @@ static void render_luna(int LUNA_X, int LUNA_Y) {
         }
     }
 
-    #if OLED_TIMEOUT > 0
-    /* the animation prevents the normal timeout from occuring */
-    if (last_input_activity_elapsed() > OLED_TIMEOUT && last_led_activity_elapsed() > OLED_TIMEOUT) {
-        oled_off();
-    } else {
-        oled_on();
-        oled_clear();
-    }
-    #endif
-
     /* animation timer */
     if (timer_elapsed32(anim_timer) > ANIM_FRAME_DURATION) {
         anim_timer = timer_read32();
@@ -631,6 +623,15 @@ static void render_logo(void) {
 }
 
 bool oled_task_user(void) {
+    #if OLED_TIMEOUT > 0
+    /* the animation prevents the normal timeout from occuring */
+    if (last_input_activity_elapsed() > OLED_TIMEOUT && last_led_activity_elapsed() > OLED_TIMEOUT) {
+        oled_off();
+        return false;
+    } else {
+        oled_on();
+    }
+    #endif
     uint32_t uptime_millsec = timer_read32 ();
     if (!finished_timer && uptime_millsec < 2000) {
         render_logo();
