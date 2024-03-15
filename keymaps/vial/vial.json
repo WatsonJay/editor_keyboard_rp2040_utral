@@ -7,7 +7,7 @@
   "lighting": "vialrgb",
   "matrix": {
     "rows": 5,
-    "cols": 4
+    "cols": 5
   },
   "layouts": {
     "keymap": [
