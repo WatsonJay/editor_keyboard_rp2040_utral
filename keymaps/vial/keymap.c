@@ -12,8 +12,8 @@
 #define _LY5 5
 #define _LY6 6
 #define _LY7 7
-#define _RGB 8
-#define _SET 9
+#define _LY8 8
+#define _RGB 9
 #define _VRY GP28
 #define _VRX GP29
 
@@ -30,16 +30,16 @@ bool arrows[4];
 #define MIN_RUN_SPEED       50
 /* timers */
 uint16_t anim_timer = 0;
-uint16_t rgb_timer = 0;
+uint16_t rgbText_timer = 0;
 /* current frame */
 uint8_t current_frame = 0;
-int current_rgbtext_Index = 0;
+int current_rgbText_index = 0;
 /* advanced settings */
 static bool finished_timer = false;
 #define ANIM_FRAME_DURATION 200  // how long each frame lasts in ms
 #define ANIM_SIZE           32   // number of bytes in array. If you change sprites, minimize for adequate firmware size. max is 1024
-
-int rgbModTextLength = 14;
+int rgbModTextLength = 10;
+char *lastRgbText = "";
 bool isBarking  = false;
 int barkCount = 6;
 bool isJumping  = false;
@@ -48,90 +48,90 @@ bool isSneaking = false;
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_LY0] = LAYOUT(
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   DB_TOGG, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
         MO(_RGB),KC_NO,   KC_NO,   KC_NO,
         KC_MS_U, KC_MS_D, KC_MS_L, KC_MS_R
     ),
     [_LY1] = LAYOUT(
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_TRNS, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [_LY2] = LAYOUT(
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_TRNS, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [_LY3] = LAYOUT(
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_TRNS, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [_LY4] = LAYOUT(
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_TRNS, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [_LY5] = LAYOUT(
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_TRNS, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [_LY6] = LAYOUT(
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_TRNS, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [_LY7] = LAYOUT(
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_TRNS, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+        KC_TRNS, KC_NO,   KC_NO,   KC_NO,
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+    ),
+    [_LY8] = LAYOUT(
+        KC_NO,   KC_NO,   KC_NO,   KC_TRNS, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [_RGB] = LAYOUT(
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        _______, RGB_TOG, KC_NO,   KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_TRNS, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+        KC_TRNS, RGB_TOG, KC_NO,   KC_NO,
         KC_NO,   KC_NO,   KC_NO,   KC_NO
     ),
-    [_SET] = LAYOUT(
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
-        KC_TRNS, KC_NO,   KC_NO,   KC_NO,
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
-    )
 };
 
 #if defined(ENCODER_MAP_ENABLE)
 const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
     //                  Encoder 1                         Encoder 2                         Encoder 3                        Encoder 4                         Encoder 5                        Encoder 6
-    [_LY0] =   { ENCODER_CCW_CW(KC_MPRV, KC_MNXT), ENCODER_CCW_CW(KC_VOLD, KC_VOLU), ENCODER_CCW_CW(KC_BRID, KC_BRIU), ENCODER_CCW_CW(KC_WBAK, KC_WFWD), ENCODER_CCW_CW(TO(_SET), TO(_LY1)), ENCODER_CCW_CW(KC_WH_U, KC_WH_D)},
+    [_LY0] =   { ENCODER_CCW_CW(KC_MPRV, KC_MNXT), ENCODER_CCW_CW(KC_VOLD, KC_VOLU), ENCODER_CCW_CW(KC_BRID, KC_BRIU), ENCODER_CCW_CW(KC_WBAK, KC_WFWD), ENCODER_CCW_CW(TO(_LY8), TO(_LY1)), ENCODER_CCW_CW(KC_WH_U, KC_WH_D)},
     [_LY1] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY0), TO(_LY2)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
-    [_LY2] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY2), TO(_LY3)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
-    [_LY3] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY3), TO(_LY4)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
-    [_LY4] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY4), TO(_LY5)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
-    [_LY5] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY5), TO(_LY6)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
-    [_LY6] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY6), TO(_LY7)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
-    [_LY7] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY7), TO(_LY8)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
-    [_RGB] =   { ENCODER_CCW_CW(GB_HUD, RRGB_HUI), ENCODER_CCW_CW(RGB_SAD, RGB_SAI), ENCODER_CCW_CW(RGB_VAD, RGB_VAI), ENCODER_CCW_CW(RGB_RMOD, RGB_MOD),ENCODER_CCW_CW(KC_NO, KC_NO),       ENCODER_CCW_CW(KC_NO, KC_NO)  },
-    [_SET] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY8), TO(_LY0)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
+    [_LY2] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY1), TO(_LY3)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
+    [_LY3] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY2), TO(_LY4)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
+    [_LY4] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY3), TO(_LY5)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
+    [_LY5] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY4), TO(_LY6)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
+    [_LY6] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY5), TO(_LY7)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
+    [_LY7] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY6), TO(_LY8)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
+    [_LY8] =   { ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(KC_NO, KC_NO),     ENCODER_CCW_CW(TO(_LY7), TO(_LY0)), ENCODER_CCW_CW(KC_NO, KC_NO)  },
+    [_RGB] =   { ENCODER_CCW_CW(RGB_HUD, RGB_HUI), ENCODER_CCW_CW(RGB_SAD, RGB_SAI), ENCODER_CCW_CW(RGB_VAD, RGB_VAI), ENCODER_CCW_CW(RGB_RMOD, RGB_MOD),ENCODER_CCW_CW(KC_NO, KC_NO),       ENCODER_CCW_CW(KC_NO, KC_NO)  },
 };
 #endif
 
@@ -143,13 +143,13 @@ void matrix_scan_user(void) {
 
       // Up
   	if (!arrows[0] && analogReadPin(_VRY) - 512 < -actuation) {
-            uprintf("JOYSTICK up on\n");
+            dprintf("JOYSTICK up on\n");
   			arrows[0] = true;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,0);
   			register_code16(keycode);
             isJumping = true;
   	} else if (arrows[0] &&  analogReadPin(_VRY) - 512 > -actuation) {
-            uprintf("JOYSTICK up off\n");
+            dprintf("JOYSTICK up off\n");
   			arrows[0] = false;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,0);
   			unregister_code16(keycode);
@@ -157,13 +157,13 @@ void matrix_scan_user(void) {
   	}
 		// Down
   	if (!arrows[1] && analogReadPin(_VRY) - 512 > actuation) {
-            uprintf("JOYSTICK down on\n");
+            dprintf("JOYSTICK down on\n");
   			arrows[1] = true;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,1);
   			register_code16(keycode);
             isSneaking = true;
   	}else if (arrows[1] && analogReadPin(_VRY) - 512 < actuation) {
-            uprintf("JOYSTICK down off\n");
+            dprintf("JOYSTICK down off\n");
   			arrows[1] = false;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,1);
   			unregister_code16(keycode);
@@ -171,24 +171,24 @@ void matrix_scan_user(void) {
   	}
     // Left
   	if (!arrows[2] && analogReadPin(_VRX) - 512 < -actuation) {
-            uprintf("JOYSTICK Left on\n");
+            dprintf("JOYSTICK Left on\n");
   			arrows[2] = true;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,2);
   			register_code16(keycode);
   	} else if (arrows[2] &&  analogReadPin(_VRX) - 512 > -actuation) {
-            uprintf("JOYSTICK Left off\n");
+            dprintf("JOYSTICK Left off\n");
   			arrows[2] = false;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,2);
   			unregister_code16(keycode);
   	}
     // Right
   	if (!arrows[3] && analogReadPin(_VRX) - 512 > actuation) {
-            uprintf("JOYSTICK Right on\n");
+            dprintf("JOYSTICK Right on\n");
   			arrows[3] = true;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,3);
   			register_code16(keycode);
   	} else if (arrows[3] && analogReadPin(_VRX) - 512 < actuation) {
-            uprintf("JOYSTICK Right off\n");
+            dprintf("JOYSTICK Right off\n");
   			arrows[3] = false;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,3);
   			unregister_code16(keycode);
@@ -243,40 +243,40 @@ static void render_layer_info(void) {
     oled_set_cursor(0, 0);
     oled_write_P(PSTR("LAYER "), false);
     oled_set_cursor(6, 0);
-    oled_write_p(PSTR("    "), false)
+    oled_write_P(PSTR("    "), false);
     switch (get_highest_layer(layer_state)) {
         case _LY0:
-            oled_write_P(PSTR("0"), true);
+            oled_write_P(PSTR("  0"), true);
             break;
         case _LY1:
-            oled_write_P(PSTR("1"), true);
+            oled_write_P(PSTR("  1"), true);
             break;
         case _LY2:
-            oled_write_P(PSTR("2"), true);
+            oled_write_P(PSTR("  2"), true);
             break;
         case _LY3:
-            oled_write_P(PSTR("3"), true);
+            oled_write_P(PSTR("  3"), true);
             break;
         case _LY4:
-            oled_write_P(PSTR("4"), true);
+            oled_write_P(PSTR("  4"), true);
             break;
         case _LY5:
-            oled_write_P(PSTR("5"), true);
+            oled_write_P(PSTR("  5"), true);
             break;
         case _LY6:
-            oled_write_P(PSTR("6"), true);
+            oled_write_P(PSTR("  6"), true);
             break;
         case _LY7:
-            oled_write_P(PSTR("7"), true);
+            oled_write_P(PSTR("  7"), true);
+            break;
+        case _LY8:
+            oled_write_P(PSTR("  8"), true);
             break;
         case _RGB:
             oled_write_P(PSTR("RGB"), true);
             break;
-        case _SET:
-            oled_write_P(PSTR("SET"), true);
-            break;
         default:
-            oled_write_P(PSTR("NONE"), false);
+            oled_write_P(PSTR("ERR"), false);
     }
 }
 
@@ -309,151 +309,42 @@ static void render_wpm(void) {
 }
 
 static void render_rgb_info(void) {
+    // all rgb modes
+    static const PROGMEM char *colorMods[] = {"NONE","SOLID COLOR", "ALPHAS MODS", "GRADIENT UP DOWN", "GRADIENT LEFT RIGHT", "BREATHING", "BAND SAT", "BAND VAL", "BAND PINWHEELSAT",
+                                          "BAND PINWHEEL VAL", "BAND SPIRAL SAT", "BAND SPIRAL VAL", "CYCLE ALL", "CYCLE LEFT RIGHT", "CYCLE UP DOWN", "RAINBOW MOVING CHEVRON",
+                                          "CYCLE OUT IN", "CYCLE OUT IN DUAL", "CYCLE PINWHEEL", "CYCLE SPIRAL", "DUAL BEACON", "RAINBOW BEACON", "RAINBOW PINWHEELS", "RAINBOW PINWHEELS",
+                                          "RAINDROPS", "JELLYBEAN RAINDROPS", "HUE BREATHING", "HUE PENDULUM", "HUE WAVE", "PIXEL FRACTAL", "PIXEL FLOW", "PIXEL RAIN", "TYPING HEATMAP",
+                                          "DIGITAL RAIN", "SOLID REACTIVE SIMPLE", "SOLID REACTIVE", "SOLID REACTIVE WIDE", "SOLID REACTIVE MULTIWIDE", "SOLID REACTIVE CROSS",
+                                          "SOLID REACTIVE CROSS", "SOLID REACTIVE NEXUS", "SOLID REACTIVE MULTINEXUS", "SPLASH", "MULTISPLASH", "SOLID SPLASH", "SOLID MULTISPLASH",
+                                          "STARLIGHT", "STARLIGHT DUAL HUE", "STARLIGHT DUAL SAT", "RIVERFLOW"};
 
-    void moving_show_text(char* text) {
-
+    // move long text
+    void move_text(char* text) {
+        if (strcmp(lastRgbText, text) != 0) {
+            current_rgbText_index = 0;
+            lastRgbText = text;
+        }
+        char dest[11] = {""};
+        if (strlen(text) > rgbModTextLength) {
+            if (strlen(text) - current_rgbText_index == rgbModTextLength) {
+                current_rgbText_index = 0;
+            }
+            strncpy(dest, text + current_rgbText_index, rgbModTextLength);
+            current_rgbText_index += 1;
+        }
+        dest[11] = '\0';
+        oled_write_P(PSTR(dest), true);
     }
-
-    // oled_set_cursor(4, 2);
-    // oled_write_P(PSTR("Animation:"), false);
     oled_set_cursor(0, 1);
-    // oled_write(get_u8_str(rgb_matrix_get_mode(), ' '), false);
-    switch (rgb_matrix_get_mode()) {
-        case 1:
-            oled_write_P(PSTR("Solid         "), false);
-            break;
-        case 2:
-            oled_write_P(PSTR("Alphas        "), false);
-            break;
-        case 3:
-            oled_write_P(PSTR("GradientUD    "), false);
-            break;
-        case 4:
-            oled_write_P(PSTR("GradientLR    "), false);
-            break;
-        case 5:
-            oled_write_P(PSTR("Breathing     "), false);
-            break;
-        case 6:
-            oled_write_P(PSTR("BandSat       "), false);
-            break;
-        case 7:
-            oled_write_P(PSTR("BandVal       "), false);
-            break;
-        case 8:
-            oled_write_P(PSTR("PinwheelS     "), false);
-            break;
-        case 9:
-            oled_write_P(PSTR("PinwheelV     "), false);
-            break;
-        case 10:
-            oled_write_P(PSTR("SpiralS       "), false);
-            break;
-        case 11:
-            oled_write_P(PSTR("SpiralV       "), false);
-            break;
-        case 12:
-            oled_write_P(PSTR("CycleAll      "), false);
-            break;
-        case 13:
-            oled_write_P(PSTR("CycleLR       "), false);
-            break;
-        case 14:
-            oled_write_P(PSTR("CycleUD       "), false);
-            break;
-        case 15:
-            oled_write_P(PSTR("RainbowMC     "), false);
-            break;
-        case 16:
-            oled_write_P(PSTR("CycleOI       "), false);
-            break;
-        case 17:
-            oled_write_P(PSTR("CycleOID      "), false);
-            break;
-        case 18:
-            oled_write_P(PSTR("CycleP        "), false);
-            break;
-        case 19:
-            oled_write_P(PSTR("CycleS        "), false);
-            break;
-        case 20:
-            oled_write_P(PSTR("DualBeacon    "), false);
-            break;
-        case 21:
-            oled_write_P(PSTR("RainbowB      "), false);
-            break;
-        case 22:
-            oled_write_P(PSTR("RainbowP      "), false);
-            break;
-        case 23:
-            oled_write_P(PSTR("Raindrops     "), false);
-            break;
-        case 24:
-            oled_write_P(PSTR("JellybeanRain "), false);
-            break;
-        case 25:
-            oled_write_P(PSTR("HueBreathing  "), false);
-            break;
-        case 26:
-            oled_write_P(PSTR("HuePendulum   "), false);
-            break;
-        case 27:
-            oled_write_P(PSTR("HueWave       "), false);
-            break;
-        case 28:
-            oled_write_P(PSTR("PixelRain     "), false);
-            break;
-        case 29:
-            oled_write_P(PSTR("PixelFlow     "), false);
-            break;
-        case 30:
-            oled_write_P(PSTR("PixelFractal  "), false);
-            break;
-        case 31:
-            oled_write_P(PSTR("TypingHeatmap "), false);
-            break;
-        case 32:
-            oled_write_P(PSTR("DigitalRain   "), false);
-            break;
-        case 33:
-            oled_write_P(PSTR("SolidReactiveS"), false);
-            break;
-        case 34:
-            oled_write_P(PSTR("SolidReactive "), false);
-            break;
-        case 35:
-            oled_write_P(PSTR("SolidReactiveW"), false);
-            break;
-        case 36:
-            oled_write_P(PSTR("SolidReactiveM"), false);
-            break;
-        case 37:
-            oled_write_P(PSTR("SolidReactiveC"), false);
-            break;
-        case 38:
-            oled_write_P(PSTR("SolidReactiveM"), false);
-            break;
-        case 39:
-            oled_write_P(PSTR("SolidReactiveN"), false);
-            break;
-        case 40:
-            oled_write_P(PSTR("SolidReactiveM"), false);
-            break;
-        case 41:
-            oled_write_P(PSTR("Splash        "), false);
-            break;
-        case 42:
-            oled_write_P(PSTR("Multisplash   "), false);
-            break;
-        case 43:
-            oled_write_P(PSTR("SolidSplash   "), false);
-            break;
-        case 44:
-            oled_write_P(PSTR("SolidM        "), false);
-            break;
-        default:
-            // Or use the write_ln shortcut over adding '\n' to the end of your string
-            oled_write_ln_P(PSTR("Undefined  "), false);
+    oled_write_P(PSTR("RGB "), false);
+    oled_set_cursor(4, 1);
+    oled_write_P(PSTR("          "), false);
+    uint8_t rgbModNum = rgb_matrix_get_mode();
+    const char *modStr = colorMods[rgbModNum];
+    uprintf(modStr);
+    if (timer_elapsed32(rgbText_timer) > ANIM_FRAME_DURATION) {
+        rgbText_timer = timer_read32();
+        move_text( (char *)modStr);
     }
 }
 
@@ -630,6 +521,7 @@ bool oled_task_user(void) {
         return false;
     } else {
         oled_on();
+        oled_clear();
     }
     #endif
     uint32_t uptime_millsec = timer_read32 ();
@@ -660,11 +552,11 @@ void oled_render_boot(bool bootloader) {
             oled_write_P(PSTR("Rebooting "), false);
         }
     }
-
     oled_render_dirty(true);
 }
 
 bool shutdown_user(bool jump_to_bootloader) {
     oled_render_boot(jump_to_bootloader);
+    return false;
 }
 #endif
