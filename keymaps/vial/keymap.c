@@ -4,6 +4,8 @@
 #include "joystick.h"
 #include "analog.h"
 
+#define TEXT_FRAME_DURATION 450
+
 #define _LY0 0
 #define _LY1 1
 #define _LY2 2
@@ -16,30 +18,32 @@
 #define _RGB 9
 #define _VRY GP28
 #define _VRX GP29
-
+/* PARAM */
 static uint32_t type_count = 0 ;
-// static uint32_t oled_timer = 0;
+static uint32_t oled_timer = 0;
+static bool finished_timer = false;
 static int actuation = 256; // actuation point for arrows (0-511)
 uint8_t layer = 0;
 int currwpm = 0;
 bool arrows[4];
+/* RGB MOVE TEXT */
+uint32_t rgbText_timer = 0;
+int current_rgbText_index = 0;
+int rgbModTextLength = 10;
+char *lastRgbText = "";
+static bool textDirect = true;
 
 /* luna */
 /* settings */
 #define MIN_WALK_SPEED      10
 #define MIN_RUN_SPEED       50
 /* timers */
-uint16_t anim_timer = 0;
-uint16_t rgbText_timer = 0;
+uint32_t anim_timer = 0;
 /* current frame */
 uint8_t current_frame = 0;
-int current_rgbText_index = 0;
 /* advanced settings */
-static bool finished_timer = false;
 #define ANIM_FRAME_DURATION 200  // how long each frame lasts in ms
 #define ANIM_SIZE           32   // number of bytes in array. If you change sprites, minimize for adequate firmware size. max is 1024
-int rgbModTextLength = 10;
-char *lastRgbText = "";
 bool isBarking  = false;
 int barkCount = 6;
 bool isJumping  = false;
@@ -48,11 +52,12 @@ bool isSneaking = false;
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_LY0] = LAYOUT(
-        KC_NO,   KC_NO,   KC_NO,   DB_TOGG, KC_NO,
+        KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
         KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
         KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
         MO(_RGB),KC_NO,   KC_NO,   KC_NO,
-        KC_MS_U, KC_MS_D, KC_MS_L, KC_MS_R
+        // KC_MS_U, KC_MS_D, KC_MS_L, KC_MS_R
+        KC_NO,   KC_NO,   KC_NO,   KC_NO
     ),
     [_LY1] = LAYOUT(
         KC_NO,   KC_NO,   KC_NO,   KC_TRNS, KC_NO,
@@ -116,7 +121,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
         KC_TRNS, RGB_TOG, KC_NO,   KC_NO,
         KC_NO,   KC_NO,   KC_NO,   KC_NO
-    ),
+    )
 };
 
 #if defined(ENCODER_MAP_ENABLE)
@@ -140,8 +145,8 @@ void matrix_init_user(void) {
 }
 
 void matrix_scan_user(void) {
-
-      // Up
+    oled_timer = timer_read32();
+    // Up
   	if (!arrows[0] && analogReadPin(_VRY) - 512 < -actuation) {
             dprintf("JOYSTICK up on\n");
   			arrows[0] = true;
@@ -155,7 +160,7 @@ void matrix_scan_user(void) {
   			unregister_code16(keycode);
             isJumping = false;
   	}
-		// Down
+    	// Down
   	if (!arrows[1] && analogReadPin(_VRY) - 512 > actuation) {
             dprintf("JOYSTICK down on\n");
   			arrows[1] = true;
@@ -212,71 +217,161 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 	return true;
 }
 
-bool wpm_keycode_user(uint16_t keycode) {
-	return true;
-}
-
 bool encoder_update_user(uint8_t index, bool clockwise) {
-    // vial_encoder_update need to change return encoder_update_user(index, clockwise)
-    type_count ++;
-    if(type_count > 99999) {
-        type_count = 0;
-    }
-    return true;
-}
+    oled_timer = timer_read32();
+    return false;
+};
 
 layer_state_t layer_state_set_user(layer_state_t state) {
    uint8_t now_layer = get_highest_layer(state);
+   static const char PROGMEM up_logo[] = {
+        0x1E
+    };
+    static const char PROGMEM down_logo[] = {
+        0x1F
+    };
    if (now_layer != layer) {
+        oled_set_cursor(12, 1);
+        if (now_layer > layer) {
+            oled_write_P(up_logo, false);
+        } else {
+            oled_write_P(down_logo, false);
+        }
         layer = now_layer;
-        isBarking = true;
    }
    return state;
 }
 
 #ifdef OLED_ENABLE
-oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    return rotation;
+static void render_logo(void) {
+    static const char PROGMEM qmk_logo[] = {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0xc0, 0x80, 0x00, 0xc0, 0xe0, 0x80, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0xf0, 0xf0, 0x3f, 0x3f, 0xf3, 0xf3, 0x3f, 0x3f, 0xf3, 0xf3, 0x3f, 0x3f, 0xf8,
+0xf0, 0x01, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+0xf0, 0xf8, 0x18, 0x18, 0x98, 0x18, 0x10, 0x00, 0xf0, 0xf8, 0x38, 0x38, 0x30, 0x30, 0xe0, 0x80,
+0x00, 0x00, 0xf8, 0x30, 0x18, 0x18, 0x18, 0xf8, 0xf8, 0x18, 0x18, 0x08, 0x00, 0xc0, 0xe0, 0x70,
+0x38, 0x18, 0x18, 0xf0, 0x80, 0x00, 0x10, 0xf0, 0xf8, 0x18, 0x98, 0xd0, 0x60, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0xf0, 0x70, 0x00, 0x00, 0x00, 0xf0, 0xf0, 0x18, 0x18, 0x18, 0xf8, 0xf8, 0x38,
+0x18, 0x08, 0x18, 0xb0, 0xf8, 0x18, 0x98, 0x90, 0x70, 0x00, 0x00, 0x00, 0xe0, 0xf8, 0x38, 0xf8,
+0xf0, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0xfc, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x30,
+0x37, 0x33, 0x31, 0x31, 0x39, 0x19, 0x00, 0x1e, 0x3f, 0x38, 0x38, 0x38, 0x18, 0x1c, 0x0e, 0x01,
+0x00, 0x7f, 0x3f, 0x00, 0x00, 0x00, 0x74, 0x1f, 0x01, 0x00, 0x00, 0x00, 0x0f, 0x1b, 0x30, 0x30,
+0x30, 0x38, 0x1c, 0x0f, 0x01, 0x00, 0x3e, 0x1f, 0x03, 0x0f, 0x1f, 0x31, 0xe0, 0xc0, 0x00, 0x00,
+0x00, 0x00, 0x0c, 0x3f, 0x30, 0x38, 0x1c, 0x1e, 0x7f, 0x3f, 0x00, 0x00, 0x40, 0x7f, 0x0f, 0x00,
+0x00, 0x00, 0x3c, 0x3f, 0x03, 0x0f, 0x1f, 0x39, 0x60, 0xc0, 0x3c, 0x3f, 0x07, 0x07, 0x02, 0x03,
+0x3f, 0xff, 0x00, 0x00, 0x7f, 0x3f, 0x30, 0x38, 0x18, 0x18, 0x18, 0x08, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
+0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+
+    oled_write_raw_P(qmk_logo, sizeof(qmk_logo));
 }
 
 static void render_layer_info(void) {
-    oled_set_cursor(0, 0);
+    oled_set_cursor(0, 1);
     oled_write_P(PSTR("LAYER "), false);
-    oled_set_cursor(6, 0);
-    oled_write_P(PSTR("    "), false);
+    oled_set_cursor(9, 1);
     switch (get_highest_layer(layer_state)) {
         case _LY0:
-            oled_write_P(PSTR("  0"), true);
+            oled_write_P(PSTR("  0"), false);
             break;
         case _LY1:
-            oled_write_P(PSTR("  1"), true);
+            oled_write_P(PSTR("  1"), false);
             break;
         case _LY2:
-            oled_write_P(PSTR("  2"), true);
+            oled_write_P(PSTR("  2"), false);
             break;
         case _LY3:
-            oled_write_P(PSTR("  3"), true);
+            oled_write_P(PSTR("  3"), false);
             break;
         case _LY4:
-            oled_write_P(PSTR("  4"), true);
+            oled_write_P(PSTR("  4"), false);
             break;
         case _LY5:
-            oled_write_P(PSTR("  5"), true);
+            oled_write_P(PSTR("  5"), false);
             break;
         case _LY6:
-            oled_write_P(PSTR("  6"), true);
+            oled_write_P(PSTR("  6"), false);
             break;
         case _LY7:
-            oled_write_P(PSTR("  7"), true);
+            oled_write_P(PSTR("  7"), false);
             break;
         case _LY8:
-            oled_write_P(PSTR("  8"), true);
+            oled_write_P(PSTR("  8"), false);
             break;
         case _RGB:
-            oled_write_P(PSTR("RGB"), true);
+            oled_write_P(PSTR("RGB"), false);
             break;
         default:
             oled_write_P(PSTR("ERR"), false);
+    }
+}
+
+static void render_rgb_info(void) {
+    // all rgb modes
+    static const PROGMEM char *colorMods[] = {"NONE","SOLID COLOR", "ALPHAS MODS", "GRADIENT UP DOWN", "GRADIENT LEFT RIGHT", "BREATHING", "BAND SAT", "BAND VAL", "BAND PINWHEELSAT",
+                                          "BAND PINWHEEL VAL", "BAND SPIRAL SAT", "BAND SPIRAL VAL", "CYCLE ALL", "CYCLE LEFT RIGHT", "CYCLE UP DOWN", "RAINBOW MOVING CHEVRON",
+                                          "CYCLE OUT IN", "CYCLE OUT IN DUAL", "CYCLE PINWHEEL", "CYCLE SPIRAL", "DUAL BEACON", "RAINBOW BEACON", "RAINBOW PINWHEELS", "RAINBOW PINWHEELS",
+                                          "RAINDROPS", "JELLYBEAN RAINDROPS", "HUE BREATHING", "HUE PENDULUM", "HUE WAVE", "PIXEL FRACTAL", "PIXEL FLOW", "PIXEL RAIN", "TYPING HEATMAP",
+                                          "DIGITAL RAIN", "SOLID REACTIVE SIMPLE", "SOLID REACTIVE", "SOLID REACTIVE WIDE", "SOLID REACTIVE MULTIWIDE", "SOLID REACTIVE CROSS",
+                                          "SOLID REACTIVE CROSS", "SOLID REACTIVE NEXUS", "SOLID REACTIVE MULTINEXUS", "SPLASH", "MULTISPLASH", "SOLID SPLASH", "SOLID MULTISPLASH",
+                                          "STARLIGHT", "STARLIGHT DUAL HUE", "STARLIGHT DUAL SAT", "RIVERFLOW"};
+
+    // move long text
+    void move_text(char* text) {
+        if (strcmp(lastRgbText, text) != 0) {
+            current_rgbText_index = 0;
+            lastRgbText = text;
+            oled_write_P(PSTR("          "), false);
+            oled_set_cursor(3, 0);
+        }
+        char dest[11] = {""};
+        if (strlen(text) > rgbModTextLength) {
+            if (textDirect) {
+                strncpy(dest, text + current_rgbText_index, rgbModTextLength);
+                if (current_rgbText_index >= strlen(text) - rgbModTextLength) {
+                    textDirect = !textDirect;
+                }else {
+                    current_rgbText_index += 1;
+                }
+            }else {
+                strncpy(dest, text + current_rgbText_index, rgbModTextLength);
+                if (current_rgbText_index <= 0) {
+                    textDirect = !textDirect;
+                }else {
+                    current_rgbText_index -= 1;
+                }
+            }
+            dest[10] = '\0';
+        } else {
+            strncpy(dest, text, strlen(text));
+        }
+        oled_write_P(PSTR(dest), false);
+    }
+    oled_set_cursor(0, 0);
+    oled_write_P(PSTR("RGB "), false);
+    uint8_t rgbModNum = rgb_matrix_get_mode();
+    const char *modStr = colorMods[rgbModNum];
+    if (timer_elapsed32(rgbText_timer) > TEXT_FRAME_DURATION) {
+        rgbText_timer = timer_read32();
+        uprintf("%ld ms, %ld ms\n", rgbText_timer, timer_elapsed32(rgbText_timer));
+        oled_set_cursor(4, 0);
+        move_text( (char *)modStr);
     }
 }
 
@@ -306,46 +401,6 @@ static void render_wpm(void) {
     oled_write_P(PSTR("WPM"), false);
     oled_set_cursor(0, 3);
     oled_write(wpm_counter, true);
-}
-
-static void render_rgb_info(void) {
-    // all rgb modes
-    static const PROGMEM char *colorMods[] = {"NONE","SOLID COLOR", "ALPHAS MODS", "GRADIENT UP DOWN", "GRADIENT LEFT RIGHT", "BREATHING", "BAND SAT", "BAND VAL", "BAND PINWHEELSAT",
-                                          "BAND PINWHEEL VAL", "BAND SPIRAL SAT", "BAND SPIRAL VAL", "CYCLE ALL", "CYCLE LEFT RIGHT", "CYCLE UP DOWN", "RAINBOW MOVING CHEVRON",
-                                          "CYCLE OUT IN", "CYCLE OUT IN DUAL", "CYCLE PINWHEEL", "CYCLE SPIRAL", "DUAL BEACON", "RAINBOW BEACON", "RAINBOW PINWHEELS", "RAINBOW PINWHEELS",
-                                          "RAINDROPS", "JELLYBEAN RAINDROPS", "HUE BREATHING", "HUE PENDULUM", "HUE WAVE", "PIXEL FRACTAL", "PIXEL FLOW", "PIXEL RAIN", "TYPING HEATMAP",
-                                          "DIGITAL RAIN", "SOLID REACTIVE SIMPLE", "SOLID REACTIVE", "SOLID REACTIVE WIDE", "SOLID REACTIVE MULTIWIDE", "SOLID REACTIVE CROSS",
-                                          "SOLID REACTIVE CROSS", "SOLID REACTIVE NEXUS", "SOLID REACTIVE MULTINEXUS", "SPLASH", "MULTISPLASH", "SOLID SPLASH", "SOLID MULTISPLASH",
-                                          "STARLIGHT", "STARLIGHT DUAL HUE", "STARLIGHT DUAL SAT", "RIVERFLOW"};
-
-    // move long text
-    void move_text(char* text) {
-        if (strcmp(lastRgbText, text) != 0) {
-            current_rgbText_index = 0;
-            lastRgbText = text;
-        }
-        char dest[11] = {""};
-        if (strlen(text) > rgbModTextLength) {
-            if (strlen(text) - current_rgbText_index == rgbModTextLength) {
-                current_rgbText_index = 0;
-            }
-            strncpy(dest, text + current_rgbText_index, rgbModTextLength);
-            current_rgbText_index += 1;
-        }
-        dest[11] = '\0';
-        oled_write_P(PSTR(dest), true);
-    }
-    oled_set_cursor(0, 1);
-    oled_write_P(PSTR("RGB "), false);
-    oled_set_cursor(4, 1);
-    oled_write_P(PSTR("          "), false);
-    uint8_t rgbModNum = rgb_matrix_get_mode();
-    const char *modStr = colorMods[rgbModNum];
-    uprintf(modStr);
-    if (timer_elapsed32(rgbText_timer) > ANIM_FRAME_DURATION) {
-        rgbText_timer = timer_read32();
-        move_text( (char *)modStr);
-    }
 }
 
 /* logic */
@@ -503,25 +558,14 @@ static void render_luna(int LUNA_X, int LUNA_Y) {
     }
 }
 
-static void render_logo(void) {
-    static const char PROGMEM qmk_logo[] = {
-        0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F, 0x90, 0x91, 0x92, 0x93, 0x94,
-        0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4,
-        0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0x00
-    };
-
-    oled_write_P(qmk_logo, false);
-}
-
 bool oled_task_user(void) {
     #if OLED_TIMEOUT > 0
-    /* the animation prevents the normal timeout from occuring */
     if (last_input_activity_elapsed() > OLED_TIMEOUT && last_led_activity_elapsed() > OLED_TIMEOUT) {
+        oled_clear();
         oled_off();
         return false;
     } else {
         oled_on();
-        oled_clear();
     }
     #endif
     uint32_t uptime_millsec = timer_read32 ();
@@ -532,31 +576,27 @@ bool oled_task_user(void) {
             oled_clear();
             finished_timer = true;
         }
-        currwpm = get_current_wpm();
         render_layer_info();
+        render_rgb_info();
         render_count();
         render_wpm();
-        render_rgb_info();
         render_luna(16, 1);
     }
     return false;
 }
 
 void oled_render_boot(bool bootloader) {
-    oled_clear();
-    for (int i = 0; i < 16; i++) {
-        oled_set_cursor(0, i);
-        if (bootloader) {
-            oled_write_P(PSTR("Awaiting New Firmware "), false);
-        } else {
-            oled_write_P(PSTR("Rebooting "), false);
-        }
+    oled_set_cursor(0, 1);
+    if (bootloader) {
+        oled_write_P(PSTR("Awaiting New Firmware "), false);
+    } else {
+        oled_write_P(PSTR("Rebooting "), false);
     }
-    oled_render_dirty(true);
 }
 
 bool shutdown_user(bool jump_to_bootloader) {
     oled_render_boot(jump_to_bootloader);
     return false;
 }
+
 #endif
