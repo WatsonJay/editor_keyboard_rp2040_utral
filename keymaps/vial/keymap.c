@@ -16,8 +16,8 @@
 #define _LY7 7
 #define _LY8 8
 #define _RGB 9
-#define _VRY GP28
-#define _VRX GP29
+#define _VRY GP27
+#define _VRX GP28
 /* PARAM */
 static uint32_t type_count = 0 ;
 static uint32_t oled_timer = 0;
@@ -148,27 +148,27 @@ void matrix_scan_user(void) {
     oled_timer = timer_read32();
     // Up
   	if (!arrows[0] && analogReadPin(_VRY) - 512 < -actuation) {
-            dprintf("JOYSTICK up on\n");
+            uprintf("JOYSTICK up on\n");
   			arrows[0] = true;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,0);
   			register_code16(keycode);
             isJumping = true;
   	} else if (arrows[0] &&  analogReadPin(_VRY) - 512 > -actuation) {
             dprintf("JOYSTICK up off\n");
-  			arrows[0] = false;
+  			urrows[0] = false;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,0);
   			unregister_code16(keycode);
             isJumping = false;
   	}
     	// Down
   	if (!arrows[1] && analogReadPin(_VRY) - 512 > actuation) {
-            dprintf("JOYSTICK down on\n");
+            uprintf("JOYSTICK down on\n");
   			arrows[1] = true;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,1);
   			register_code16(keycode);
             isSneaking = true;
   	}else if (arrows[1] && analogReadPin(_VRY) - 512 < actuation) {
-            dprintf("JOYSTICK down off\n");
+            uprintf("JOYSTICK down off\n");
   			arrows[1] = false;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,1);
   			unregister_code16(keycode);
@@ -176,24 +176,24 @@ void matrix_scan_user(void) {
   	}
     // Left
   	if (!arrows[2] && analogReadPin(_VRX) - 512 < -actuation) {
-            dprintf("JOYSTICK Left on\n");
+            uprintf("JOYSTICK Left on\n");
   			arrows[2] = true;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,2);
   			register_code16(keycode);
   	} else if (arrows[2] &&  analogReadPin(_VRX) - 512 > -actuation) {
-            dprintf("JOYSTICK Left off\n");
+            uprintf("JOYSTICK Left off\n");
   			arrows[2] = false;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,2);
   			unregister_code16(keycode);
   	}
     // Right
   	if (!arrows[3] && analogReadPin(_VRX) - 512 > actuation) {
-            dprintf("JOYSTICK Right on\n");
+            uprintf("JOYSTICK Right on\n");
   			arrows[3] = true;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,3);
   			register_code16(keycode);
   	} else if (arrows[3] && analogReadPin(_VRX) - 512 < actuation) {
-            dprintf("JOYSTICK Right off\n");
+            uprintf("JOYSTICK Right off\n");
   			arrows[3] = false;
   			uint16_t keycode = dynamic_keymap_get_keycode(biton32(layer_state), 4,3);
   			unregister_code16(keycode);
@@ -560,7 +560,7 @@ static void render_luna(int LUNA_X, int LUNA_Y) {
 
 bool oled_task_user(void) {
     #if OLED_TIMEOUT > 0
-    if (last_input_activity_elapsed() > OLED_TIMEOUT && last_led_activity_elapsed() > OLED_TIMEOUT) {
+    if (timer_elapsed32(oled_timer) > OLED_TIMEOUT && get_current_wpm() == 000) {
         oled_clear();
         oled_off();
         return false;
