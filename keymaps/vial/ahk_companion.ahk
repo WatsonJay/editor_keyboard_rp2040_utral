@@ -1,0 +1,13 @@
+﻿#Requires AutoHotkey v2.0
+F13::Run "notepad"
+F14::Run "notepad"
+F15::Run "notepad"
+F16::Run "notepad"
+F17::Run "notepad"
+F18::Run "notepad"
+F19::Run "notepad"
+F20::Run "notepad"
+F21::Run "notepad"
+F22::Run "notepad"
+F23::Run "notepad"
+F24::Run "notepad"
