@@ -41,7 +41,7 @@
 4、哨戒机枪
 [["down", "KC_LCTRL"], ["delay", 40], ["tap", "KC_DOWN"], ["delay", 40], ["tap", "KC_UP"], ["delay", 40], ["tap", "KC_RIGHT"], ["delay", 40], ["tap", "KC_RIGHT"], ["delay", 40], ["tap", "KC_UP"], ["delay", 20], ["up", "KC_LCTRL"]]
 5、加特林哨戒炮
-[["down", "KC_LCTRL"], ["delay", 40], ["tap", "KC_DOWN"], ["delay", 40], ["tap", "KC_UP"], ["delay", 40], ["tap", "KC_LEFT"], ["delay", 40], ["tap", "KC_RIGHT"], ["delay", 20], ["up", "KC_LCTRL"]]
+[["down", "KC_LCTRL"], ["delay", 40], ["tap", "KC_DOWN"], ["delay", 40], ["tap", "KC_UP"], ["delay", 40], ["tap", "KC_RIGHT"], ["delay", 40], ["tap", "KC_LEFT"], ["delay", 20], ["up", "KC_LCTRL"]]
 6、自动哨戒炮
 7、火箭哨戒炮
 8、电磁冲击波哨戒炮
