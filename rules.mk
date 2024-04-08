@@ -11,4 +11,7 @@ DYNAMIC_MACRO_ENABLE = yes
 OLED_ENABLE = yes
 OLED_DRIVER = ssd1306
 
-SRC += analog.c
+CUSTOM_MATRIX = lite
+
+SRC += analog.c \
+	   matrix.c
