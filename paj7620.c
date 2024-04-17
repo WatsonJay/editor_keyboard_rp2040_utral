@@ -289,16 +289,17 @@ uint8_t paj7620_init(void)
 	dprintf("INIT SENSOR...");
 
 	paj7620_select_bank(BANK0);
-	paj7620_select_bank(BANK0);
-
-	error = paj7620_read_reg(0, 1, &data0);
+    //读取0x00地址，唤醒(正常返回0x20)
+	error = paj7620_read_reg(0x00, 1, &data0);
 	if (error)
 	{
+        dprintf("wake up error...");
 		return error;
 	}
-	error = paj7620_read_reg(1, 1, &data1);
+	error = paj7620_read_reg(0x01, 1, &data1);
 	if (error)
 	{
+        dprintf("wake up error...");
 		return error;
 	}
 	dprintf("Addr0 =");
@@ -325,6 +326,38 @@ uint8_t paj7620_init(void)
 
 	dprintf("Paj7620 initialize register finished.");
 	return 0;
+}
+
+void paj7620_set_enable(bool isenable)
+{
+    paj7620_select_bank(BANK1);  //先切换到 Bank 1
+    paj7620_write_reg(PAJ7620_ADDR_OPERATION_ENABLE, isenable? 0x01 : 0x00);
+}
+
+void paj7620_suspend(void)
+{
+    paj7620_set_enable(false);
+    paj7620_select_bank(BANK0);  //先切换到 Bank 0
+    paj7620_write_reg(PAJ7620_ADDR_SUSPEND_CMD, 0x01);
+}
+
+void paj7620_wake_up(void)
+{
+    uint8_t data0 = 0, count = 0;
+    while (true) {
+        count ++;
+        paj7620_read_reg(0x00, 1, &data0);
+        if ( data0 == 0x20 )
+	    {
+		    dprintf("wake-up finish.");
+            break;
+	    }
+        if (count > 4) {
+            dprintf("wake-up fail.");
+        }
+    }
+    paj7620_set_enable(true);
+    paj7620_select_bank(BANK0);
 }
 
 uint16_t paj7620_gesture(void)

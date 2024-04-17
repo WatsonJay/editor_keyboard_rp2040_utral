@@ -96,6 +96,16 @@ bool paj7620_read_reg(uint8_t addr, uint8_t qty, uint8_t data[]);
 void paj7620_select_bank(bank_e bank);
 
 /**
- * 获取paj7620
+ * 获取paj7620手势
  */
 uint16_t paj7620_gesture(void);
+
+/**
+ * paj7620休眠
+ */
+void paj7620_suspend(void);
+
+/**
+ * paj7620唤醒
+ */
+void paj7620_wake_up(void);
