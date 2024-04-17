@@ -8,10 +8,13 @@ WPM_ENABLE = yes
 
 DYNAMIC_MACRO_ENABLE = yes
 
+I2C_DRIVER_REQUIRED = yes
+
 OLED_ENABLE = yes
 OLED_DRIVER = ssd1306
 
 CUSTOM_MATRIX = lite
 
 SRC += analog.c \
-	   matrix.c
+	   matrix.c \
+	   paj7620.c
