@@ -57,7 +57,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO,   KC_NO,   KC_NO,   KC_NO, KC_NO,
         KC_F13,  KC_F14,  KC_F15,  KC_F16,MO(_RGB),
         KC_F17,  KC_F18,  KC_F19,  KC_F20,KC_NO,
-        KC_F23,  KC_F24,  KC_F21,  KC_F22,
+        KC_F24,  KC_F23,  KC_F21,  KC_F22,
         KC_MS_U, KC_MS_D, KC_MS_L, KC_MS_R
     ),
     [_LY1] = LAYOUT(
@@ -177,13 +177,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 	return true;
 }
 
-// void keyboard_post_init_user(void) {
-//   // Customise these values to desired behaviour
-//   debug_enable=true;
-//   debug_matrix=true;
-//   debug_keyboard=true;
-//   debug_mouse=true;
-// }
+void keyboard_post_init_user(void) {
+  // Customise these values to desired behaviour
+  debug_enable=true;
+  debug_matrix=true;
+  debug_keyboard=true;
+  debug_mouse=true;
+}
 
 bool encoder_update_user(uint8_t index, bool clockwise) {
     oled_timer = timer_read32();
