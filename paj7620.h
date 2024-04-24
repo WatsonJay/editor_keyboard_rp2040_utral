@@ -71,7 +71,7 @@ typedef enum {
 #define GES_BACKWARD_FLAG			PAJ7620_VAL(1,5)
 #define GES_CLOCKWISE_FLAG			PAJ7620_VAL(1,6)
 #define GES_COUNT_CLOCKWISE_FLAG	PAJ7620_VAL(1,7)
-#define GES_WAVE_FLAG				PAJ7620_VAL(1,0)
+#define GES_WAVE_FLAG				PAJ7620_VAL(1,8)
 
 #define INIT_REG_ARRAY_SIZE (sizeof(initRegisterArray)/sizeof(initRegisterArray[0]))
 
