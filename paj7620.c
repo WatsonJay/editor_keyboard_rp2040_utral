@@ -1,8 +1,5 @@
 #include "paj7620.h"
 
-// Transfer buffer
-uint8_t paj7620_transfer_buffer[20];
-
 unsigned char initRegisterArray[][2] = {	// Initial Gesture
     {0xEF,0x00},
 	{0x32,0x29},
@@ -222,7 +219,7 @@ unsigned char initRegisterArray[][2] = {	// Initial Gesture
 	{0x77,0x01},
 	{0x7C,0x84},
 	{0x7D,0x03},
-	{0x7E,0x01},
+	{0x7E,0x01}
 };
 
 /****************************************************************
@@ -233,12 +230,10 @@ unsigned char initRegisterArray[][2] = {	// Initial Gesture
 ****************************************************************/
 bool paj7620_write_reg(uint8_t addr, uint8_t cmd)
 {
-    paj7620_transfer_buffer[0] = addr;
-    paj7620_transfer_buffer[1] = cmd;
-    i2c_status_t status = i2c_transmit(PAJ7620_ID, paj7620_transfer_buffer, 2, PAJ7620_I2C_TIMEOUT);
+    i2c_status_t status = i2c_writeReg(PAJ7620_ID, addr, &cmd, 1, PAJ7620_I2C_TIMEOUT);
 	if(status == I2C_STATUS_ERROR)
     {
-		dprintf("Transmission error!!!\n");
+		printf("Transmission error!!!\n");
 	}
 	return (status == I2C_STATUS_SUCCESS);
 }
@@ -281,41 +276,38 @@ uint8_t paj7620_init(void)
 {
 	//Near_normal_mode_V5_6.15mm_121017 for 940nm
 	int i = 0;
-	bool error;
-	uint8_t data0 = 0, data1 = 0;
+	// bool error;
+	// uint8_t data0 = 0, data1 = 0;
     //wakeup the sensor
 	i2c_init();
 	wait_us(700);
-	dprintf("INIT SENSOR...");
+	printf("INIT SENSOR...");
 
 	paj7620_select_bank(BANK0);
-    //读取0x00地址，唤醒(正常返回0x20)
-	error = paj7620_read_reg(0x00, 1, &data0);
-	if (error)
-	{
-        dprintf("wake up error...");
-		return error;
-	}
-	error = paj7620_read_reg(0x01, 1, &data1);
-	if (error)
-	{
-        dprintf("wake up error...");
-		return error;
-	}
-	dprintf("Addr0 =");
-	dprintf(data0 , HEX);
-	dprintf(",  Addr1 =");
-	dprintf(data1 , HEX);
-    dprintf("\n");
+    paj7620_wake_up();
+    // //读取0x00地址，唤醒(正常返回0x20)
+	// error = paj7620_read_reg(0x00, 1, &data0);
+	// if (error)
+	// {
+    //     printf("wake up error...");
+	// 	return error;
+	// }
+	// error = paj7620_read_reg(0x01, 1, &data1);
+	// if (error)
+	// {
+    //     printf("wake up error...");
+	// 	return error;
+	// }
+	// printf("Addr0 = %u,  Addr1 = %u\n", data0, data1);
 
-	if ( (data0 != 0x20 ) || (data1 != 0x76) )
-	{
-		return 0xff;
-	}
-	if ( data0 == 0x20 )
-	{
-		dprintf("wake-up finish.");
-	}
+	// if ( (data0 != 0x20 ) || (data1 != 0x76) )
+	// {
+	// 	return 0xff;
+	// }
+	// if ( data0 == 0x20 )
+	// {
+	// 	printf("wake-up finish.");
+	// }
 
 	for (i = 0; i < INIT_REG_ARRAY_SIZE; i++)
 	{
@@ -324,7 +316,7 @@ uint8_t paj7620_init(void)
 
 	paj7620_select_bank(BANK0);  //gesture flage reg in Bank0
 
-	dprintf("Paj7620 initialize register finished.");
+	printf("Paj7620 initialize register finished.");
 	return 0;
 }
 
@@ -349,11 +341,11 @@ void paj7620_wake_up(void)
         paj7620_read_reg(0x00, 1, &data0);
         if ( data0 == 0x20 )
 	    {
-		    dprintf("wake-up finish.");
+		    printf("wake-up finish.");
             break;
 	    }
         if (count > 4) {
-            dprintf("wake-up fail.");
+            printf("wake-up fail.");
         }
     }
     paj7620_set_enable(true);
@@ -364,13 +356,13 @@ uint16_t paj7620_gesture(void)
 {
     uint8_t Data[2] = {0, 0};
     uint16_t gesture_type = 0x00;
-    i2c_status_t status = i2c_readReg(PAJ7620_ID, PAJ7620_ADDR_GES_PS_DET_FLAG_0, &Data[0], sizeof(uint8_t), PAJ7620_I2C_TIMEOUT);
+    i2c_status_t status = paj7620_read_reg(PAJ7620_ADDR_GES_PS_DET_FLAG_0, 1, &Data[0]);
     wait_us(5);
-    status = i2c_readReg(PAJ7620_ID, PAJ7620_ADDR_GES_PS_DET_FLAG_1, &Data[1], sizeof(uint8_t), PAJ7620_I2C_TIMEOUT);
+    status = paj7620_read_reg(PAJ7620_ADDR_GES_PS_DET_FLAG_1, 1, &Data[1]);
     wait_us(5);
     if(status == I2C_STATUS_ERROR)
     {
-		dprintf("Transmission error!!!\n");
+		printf("Transmission error!!!\n");
         return gesture_type;
 	}
     gesture_type = Data[1] << 8 | Data[0];

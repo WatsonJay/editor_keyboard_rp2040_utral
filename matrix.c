@@ -147,33 +147,34 @@ static void read_rows_on_col(matrix_row_t current_matrix[], uint8_t current_col,
 }
 
 static void set_paj7620_to_matrix(matrix_row_t current_matrix[]) {
-    current_matrix[_PAJ7620_ROW1] = 0b00000;
-    current_matrix[_PAJ7620_ROW2] = 0b00000;
+    current_matrix[_PAJ7620_ROW1] = 0;
+    current_matrix[_PAJ7620_ROW2] = 0;
     uint16_t gesture = paj7620_gesture();
-    //注意向右旋转90度
-    // up -> right
-    // down -> left
-    // right -> down
-    // left -> up
+    matrix_io_delay();
+    //注意向左旋转90度
+    // up -> left
+    // down -> right
+    // right -> up
+    // left -> down
     switch(gesture) {
         case GES_RIGHT_FLAG: //up
-            current_matrix[_PAJ7620_ROW1] = 0b00001;break;
+            current_matrix[_PAJ7620_ROW1] = (MATRIX_ROW_SHIFTER << 0); break;
         case GES_LEFT_FLAG: //down
-            current_matrix[_PAJ7620_ROW1] = 0b00010;break;
-        case GES_DOWN_FLAG: //right
-            current_matrix[_PAJ7620_ROW1] = 0b00100;break;
+            current_matrix[_PAJ7620_ROW1] = (MATRIX_ROW_SHIFTER << 1); break;
         case GES_UP_FLAG: //left
-            current_matrix[_PAJ7620_ROW1] = 0b01000;break;
+            current_matrix[_PAJ7620_ROW1] = (MATRIX_ROW_SHIFTER << 2); break;
+        case GES_DOWN_FLAG: //right
+            current_matrix[_PAJ7620_ROW1] = (MATRIX_ROW_SHIFTER << 3); break;
         case GES_WAVE_FLAG: //wave
-            current_matrix[_PAJ7620_ROW1] = 0b10000;break;
+            current_matrix[_PAJ7620_ROW1] = (MATRIX_ROW_SHIFTER << 4); break;
         case GES_FORWARD_FLAG: //forward
-            current_matrix[_PAJ7620_ROW2] = 0b00001;break;
+            current_matrix[_PAJ7620_ROW2] = (MATRIX_ROW_SHIFTER << 0); break;
         case GES_BACKWARD_FLAG: //backward
-            current_matrix[_PAJ7620_ROW2] = 0b00010;break;
+            current_matrix[_PAJ7620_ROW2] = (MATRIX_ROW_SHIFTER << 1); break;
         case GES_CLOCKWISE_FLAG: //clockwise
-            current_matrix[_PAJ7620_ROW2] = 0b00100;break;
+            current_matrix[_PAJ7620_ROW2] = (MATRIX_ROW_SHIFTER << 2); break;
         case GES_COUNT_CLOCKWISE_FLAG: //countCLockwise
-            current_matrix[_PAJ7620_ROW2] = 0b01000;break;
+            current_matrix[_PAJ7620_ROW2] = (MATRIX_ROW_SHIFTER << 3); break;
         default:
             break;
     }
@@ -182,15 +183,25 @@ static void set_paj7620_to_matrix(matrix_row_t current_matrix[]) {
 void matrix_init_custom(void) {
     // TODO: initialize hardware here
     unselect_cols();
-
     for (uint8_t x = 0; x < MATRIX_ROWS; x++) {
         if (row_pins[x] != NO_PIN) {
             setPinInputHigh_atomic(row_pins[x]);
         }
     }
-
     paj7620_init();
 }
+
+void matrix_print_my(matrix_row_t current_matrix[])
+{
+    print("\nr/c 01234567\n");
+
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        print_hex8(row); print(": ");
+        print_bin_reverse8(current_matrix[row]);
+        print("\n");
+    }
+}
+
 
 bool matrix_scan_custom(matrix_row_t current_matrix[]) {
     static matrix_row_t temp_matrix[MATRIX_ROWS] = {0};
@@ -199,10 +210,14 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]) {
     for (uint8_t current_col = 0; current_col < MATRIX_COLS; current_col++, row_shifter <<= 1) {
         read_rows_on_col(temp_matrix, current_col, row_shifter);
     }
+    // printf("%b,", temp_matrix[5]);
     set_paj7620_to_matrix(temp_matrix);
+    // printf("%b\n", temp_matrix[5]);
     bool changed = memcmp(current_matrix, temp_matrix, sizeof(temp_matrix)) != 0;
     if (changed) {
+        printf("changed\n");
         memcpy(current_matrix, temp_matrix, sizeof(temp_matrix));
+        matrix_print_my(current_matrix);
     }
     return changed;
 }

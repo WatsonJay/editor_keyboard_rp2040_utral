@@ -18,7 +18,6 @@
 /* PARAM */
 static uint32_t type_count = 0 ;
 static uint32_t oled_timer = 0;
-static bool finished_timer = false;
 uint8_t layer = 0;
 int currwpm = 0;
 bool arrows[4];
@@ -27,10 +26,13 @@ uint32_t rgbText_timer = 0;
 int current_rgbText_index = 0;
 int rgbModTextLength = 10;
 char *lastRgbText = "";
+#ifdef OLED_ENABLE
+static bool finished_timer = false;
 static bool textDirect = true;
 /* Layer Pic */
 static bool showing_layer = false;
 static uint32_t show_layer_timer = 0;
+#endif
 #define LAYER_ICON_WIDTH 32
 #define LAYER_ICON_DURATION 1000
 #define LAYER_COL 16
@@ -214,6 +216,8 @@ bool wpm_keycode_user(uint16_t keycode) {
 	return true;
 }
 
+#ifdef OLED_ENABLE
+
 static void oled_write_layer_pic(uint8_t now_layer) {
     static const char PROGMEM layerPic[DYNAMIC_KEYMAP_LAYER_COUNT][4][LAYER_ICON_WIDTH] = {
         /* 'yingyong'(_LY0), 32x32px */
@@ -305,14 +309,15 @@ static void oled_write_layer_pic_clear(void) {
 layer_state_t layer_state_set_user(layer_state_t state) {
    uint8_t now_layer = get_highest_layer(state);
    showing_layer = true;
+
    oled_write_layer_pic(now_layer);
-   static const char PROGMEM up_logo[] = {
+    static const char PROGMEM up_logo[] = {
         0x1E,0x00
     };
     static const char PROGMEM down_logo[] = {
         0x1F,0x00
     };
-   if (now_layer != layer) {
+    if (now_layer != layer) {
         oled_set_cursor(12, 1);
         if (now_layer > layer) {
             oled_write_P(up_logo, false);
@@ -320,11 +325,10 @@ layer_state_t layer_state_set_user(layer_state_t state) {
             oled_write_P(down_logo, false);
         }
         layer = now_layer;
-   }
+    }
    return state;
 }
 
-#ifdef OLED_ENABLE
 static void render_logo(void) {
     static const char PROGMEM qmk_logo[] = {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0xc0, 0x80, 0x00, 0xc0, 0xe0, 0x80, 0x00, 0x00,
