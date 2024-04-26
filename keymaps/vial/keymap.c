@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 
 #include QMK_KEYBOARD_H
+#include "paj7620.h"
 
 #define TEXT_FRAME_DURATION 450
 
@@ -214,6 +215,20 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
 
 bool wpm_keycode_user(uint16_t keycode) {
 	return true;
+}
+
+void suspend_power_down_user(void) {
+    #ifdef RGB_MATRIX_ENABLE
+    rgb_matrix_set_suspend_state(true);
+    #endif  // RGB_MATRIX_ENABLE
+    paj7620_suspend();
+}
+
+void suspend_wakeup_init_user(void) {
+    #ifdef RGB_MATRIX_ENABLE
+        rgb_matrix_set_suspend_state(false);
+    #endif  // RGB_MATRIX_ENABLE
+    paj7620_wake_up();
 }
 
 #ifdef OLED_ENABLE
